@@ -1,56 +1,43 @@
 const fs = require("fs");
 
-var products = []
-var categories = []
+let products = [];
+let categories = [];
 
-exports.initialize = () => {
+module.exports.initialize = function () {
     return new Promise((resolve, reject) => {
         fs.readFile('./data/products.json', 'utf8', (err, data) => {
             if (err) {
-                reject("unable to read file");
+                reject(err);
             } else {
                 products = JSON.parse(data);
+
+                fs.readFile('./data/categories.json', 'utf8', (err, data) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        categories = JSON.parse(data);
+                        resolve();
+                    }
+                });
             }
         });
+    });
+}
 
-        fs.readFile('./data/categories.json', 'utf8', (err, data) => {
-            if (err) {
-                reject("unable to read file");
-            } else {
-                categories = JSON.parse(data);
-            }
-        });
-        resolve();
-    })
-};
+module.exports.getAllProducts = function(){
+    return new Promise((resolve,reject)=>{
+        (products.length > 0 ) ? resolve(products) : reject("no results returned"); 
+    });
+}
 
-exports.getAllProducts = () => {
-    return new Promise((resolve, reject) => {
-        if (products.length == 0) {
-            reject('no results returned');
-        } else {
-            resolve(posts);
-        }
-    })
-};
+module.exports.getPublishedProducts = function(){
+    return new Promise((resolve,reject)=>{
+        (products.length > 0) ? resolve(products.filter(product => product.published)) : reject("no results returned");
+    });
+}
 
-exports.getPublishedProducts = () => {
-    return new Promise((resolve, reject) => {
-        var publishproducts = products.filter(products => products.published == true);
-
-        if (publishproducts.length == 0) {
-            reject('no results returned');
-        }
-        resolve(publishproducts);
-    })
-};
-
-exports.getCategories = () => {
-    return new Promise((resolve, reject) => {
-        if (categories.length == 0) {
-            reject('no results returned');
-        } else {
-            resolve(categories);
-        }
-    })
-};
+module.exports.getCategories = function(){
+    return new Promise((resolve,reject)=>{
+        (categories.length > 0 ) ? resolve(categories) : reject("no results returned"); 
+    });
+}
