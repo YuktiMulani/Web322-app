@@ -5,10 +5,10 @@ Policy. No part
 * Of this assignment has been copied manually or electronically from any other source
 * (including 3rd party web sites) or distributed to other students.
 *
-* Name: Devarsh Yatinbhai Dave ID: 163077217 Date: 10/14/2022
+* Name: Yukti Manoj Mulani ID: 156809212 Date: 16/10/2022
 
 *
-* Online (Cyclic) Link: https://busy-red-perch-tam.cyclic.app
+* Online (Cyclic) Link: 
 *
 ********************************************************************************/
 
@@ -27,9 +27,9 @@ function onHttpStart() {
 }
 
 cloudinary.config({
-    cloud_name: 'dh3im9qbr',
-    api_key: '985997496459944',
-    api_secret: 'r1uPEyRIBjMW4RAoH0LVGNJQshw',
+    cloud_name: 'dpvrtu9b0',
+    api_key: '512778642227934',
+    api_secret: '8mU8y2UufWxwZQPYs7aQaODYBhI',
     secure: true
 });
 
