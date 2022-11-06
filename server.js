@@ -1,161 +1,135 @@
-/*********************************************************************************
-* WEB322 – Assignment 03
-* I declare that this assignment is my own work in accordance with Seneca Academic
-Policy. No part
-* Of this assignment has been copied manually or electronically from any other source
-* (including 3rd party web sites) or distributed to other students.
-*
-* Name: Yukti Manoj Mulani ID: 156809212 Date: 16/10/2022
-
-*
-* Online (Cyclic) Link: https://dull-pear-barnacle-shoe.cyclic.app
-*
-********************************************************************************/
-
-var express = require("express");
-var app = express();
-var path = require('path');
+const express = require('express');
+const exphbs=require('express-handlebars');
+const productData = require("./product-service");
 const multer = require("multer");
-const cloudinary = require('cloudinary').v2
-const streamifier = require('streamifier')
-var productservice = require(__dirname + '/product-service.js');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+const path = require("path");
+const app = express();
 
-var HTTP_PORT = process.env.PORT || 8080;
-
-function onHttpStart() {
-    console.log('Express http server listening on ' + HTTP_PORT);
-}
+const HTTP_PORT = process.env.PORT || 8080;
 
 cloudinary.config({
-    cloud_name: 'dpvrtu9b0',
-    api_key: '512778642227934',
-    api_secret: '8mU8y2UufWxwZQPYs7aQaODYBhI',
+    cloud_name: 'dfigibz6e',
+    api_key: '964183147451584',
+    api_secret: 'Ap59uY4V1aViroxLP3QA6WmeqHk',
     secure: true
 });
 
-const upload = multer() // no { storage: storage }
+const upload = multer();
 
 app.use(express.static('public'));
 
+app.engine('.hbs', exphbs.engine({ extname: '.hbs' }));
+app.set('view engine', '.hbs');
 app.get('/', (req, res) => {
-    res.redirect('/index')
+    res.render(path.join(__dirname, "views/layouts/main.hbs"))
 });
 
-app.get('/index', (req, res) => {
-    res.sendFile(path.join(__dirname + "/views/index.html"));
-});
-
-app.get("/data/products.json", (req, res) => {
-    productservice.getAllProducts().then((data) => {
-        res.json({ data });
-    }).catch((err) => {
-        res.json({ message: err });
-    })
-});
-
-app.get("/data/categories.json", (req, res) => {
-    productservice.getCategories().then((data) => {
-        res.json({ data });
-    }).catch((err) => {
-        res.json({ message: err });
-    })
-});
-
-app.get("/home", function(req, res) {
-    productservice.getPublishedProducts().then(function(data) {
-        res.json({ data });
-    }).catch(function(err) {
-        res.json({ message: err });
-    })
-});
-
-app.get("/demos", function(req, res) {
-
-    if (req.query.category) {
-        home.getProductsByCategory(req.query.category).then((data) => {
-            res.json(data);
-        }).catch(function(err) {
-            res.json({ message: err });
-        })
-    } else if (req.query.minDate) {
-        home.getProductsByMinDate(req.query.minDate).then((data) => {
-            res.json(data);
-        }).catch(function(err) {
-            res.json({ message: err });
-        })
-    } else {
-        productservice
-            .getAllProducts()
-            .then(function(data) {
-                res.json(data);
-            })
-            .catch(function(err) {
-                res.json({ message: err });
-            });
-    }
-});
-
-app.get('/product/:id', (req, res) => {
-    home.getProductById(req.params.id).then((data) => {
-
+app.get('/products', (req,res)=>{
+    productData.getPublishedProducts().then((data=>{
         res.json(data);
-    }).catch(function(err) {
-        res.json({ message: err });
+    })).catch(err=>{
+        res.json({message: err});
     });
-
-
 });
 
-app.get("/categories", function(req, res) {
-    productservice.getCategories().then(function(data) {
-        res.json({ data });
-    }).catch(function(err) {
-        res.json({ message: err });
+app.get('/demos', (req,res)=>{
+
+    let queryPromise = null;
+
+    if(req.query.category){
+        queryPromise = productData.getProductsByCategory(req.query.category);
+    }else if(req.query.minDate){
+        queryPromise = productData.getProductsByMinDate(req.query.minDate);
+    }else{
+        queryPromise = productData.getAllProducts()
+    } 
+
+    queryPromise.then(data=>{
+        res.json(data);
+    }).catch(err=>{
+        res.json({message: err});
     })
+
 });
 
-
-app.get('/products/add', function(req, res) {
-    res.sendFile(path.join(__dirname + "/views/addProduct.html"));
-});
-
-app.post('/products/add', upload.single("featureImage"), (req, res) => {
-
-    let streamUpload = (req) => {
-        return new Promise((resolve, reject) => {
-            let stream = cloudinary.uploader.upload_stream(
-                (error, result) => {
-                    if (result) {
-                        resolve(result);
-                    } else {
-                        reject(error);
-                    }
-                }
-            );
-            streamifier.createReadStream(req.file.buffer).pipe(stream);
-        });
-    };
-    async function upload(req) {
-        let result = await streamUpload(req);
-        console.log(result);
-        return result;
-    }
-    upload(req).then((uploaded) => {
-        req.body.featureImage = uploaded.url;
-        productservice.addProduct(req.body).then(() => {
-            res.redirect('/demos');
-        }).catch((data) => { res.send(data); })
+app.get('/categories', (req,res)=>{
+    productData.getCategories().then((data=>{
+        res.json(data);
+    })).catch(err=>{
+        res.json({message: err});
     });
+});
 
+app.post("/products/add", upload.single("featureImage"), (req,res)=>{
+
+    if(req.file){
+        let streamUpload = (req) => {
+            return new Promise((resolve, reject) => {
+                let stream = cloudinary.uploader.upload_stream(
+                    (error, result) => {
+                        if (result) {
+                            resolve(result);
+                        } else {
+                            reject(error);
+                        }
+                    }
+                );
+    
+                streamifier.createReadStream(req.file.buffer).pipe(stream);
+            });
+        };
+    
+        async function upload(req) {
+            let result = await streamUpload(req);
+            console.log(result);
+            return result;
+        }
+    
+        upload(req).then((uploaded)=>{
+            processProduct(uploaded.url);
+        });
+    }else{
+        processProduct("");
+    }
+
+    function processProduct(imageUrl){
+        req.body.featureImage = imageUrl;
+
+        productData.addProduct(req.body).then(product=>{
+            res.redirect("/demos");
+        }).catch(err=>{
+            res.status(500).send(err);
+        })
+    }   
+});
+
+app.get('/products/add', (req,res)=>{
+   res.render(path.join(__dirname, "/views/addProduct.hbs"));
+}); 
+
+app.get('/product/:id', (req,res)=>{
+    productData.getProductById(req.params.id).then(data=>{
+        res.json(data);
+    }).catch(err=>{
+        res.json({message: err});
+    });
+});
+
+
+
+
+
+
+app.use((req,res)=>{
+    res.status(404).send("404 - Page Not Found")
 })
 
-
-app.get('*', function(req, res) {
-    res.status(404).send("Page Not Found!!!");
-});
-
-productservice.initialize().then(() => {
-    app.listen(HTTP_PORT, onHttpStart());
-}).catch(() => {
-    console.log("ERROR : From starting the server");
-});
+productData.initialize().then(()=>{
+    app.listen(HTTP_PORT, () => { 
+        console.log('server listening on: ' + HTTP_PORT); 
+    });
+}).catch((err)=>{
+    console.log(err);
+})
