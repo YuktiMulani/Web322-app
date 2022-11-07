@@ -3,7 +3,7 @@
 		"id": 1,
 		"body": "An introduction to Node.js",
 		"title": "Intro to Node.js",
-		"postDate": "2020-02-25",
+		"productDate": "2020-02-25",
 		"category": 1,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": true
@@ -12,7 +12,7 @@
 		"id": 2,
 		"body": "Step to step manual on how to conduct Logistic Regression",
 		"title": "Intro to Logistic Regression",
-		"postDate": "2020-10-06",
+		"productDate": "2020-10-06",
 		"category": 2,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": false
@@ -21,7 +21,7 @@
 		"id": 3,
 		"body": "Apache Spark is a multi-language engine for executing data engineering, data science, and machine learning on single-node machines or clusters.",
 		"title": "Apache Spark Demo",
-		"postDate": "2020-02-06",
+		"productDate": "2020-02-06",
 		"category": 3,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": true
@@ -30,7 +30,7 @@
 		"id": 4,
 		"body": "Kubernetes, also known as K8s, is an open-source system for automating deployment, scaling, and management of containerized applications.",
 		"title": "Kubernetes 101",
-		"postDate": "2020-03-06",
+		"productDate": "2020-03-06",
 		"category": 4,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": false
@@ -39,7 +39,7 @@
 		"id": 5,
 		"body": "DevOps is a set of practices that combines software development (Dev) and IT operations (Ops).",
 		"title": "DevOps Platform",
-		"postDate": "2020-06-13",
+		"productDate": "2020-06-13",
 		"category": 5,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": false
@@ -48,7 +48,7 @@
 		"id": 6,
 		"body": "A blockchain is a type of Digital Ledger Technology (DLT) that consists of growing list of records, called blocks, that are securely linked together using cryptography.",
 		"title": "Blockchain Hackathon",
-		"postDate": "2020-05-29",
+		"productDate": "2020-05-29",
 		"category": 6,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": false
@@ -57,7 +57,7 @@
 		"id": 7,
 		"body": "Java is a high-level, class-based, object-oriented programming language that is designed to have as few implementation dependencies as possible.",
 		"title": "Java OOP",
-		"postDate": "2020-08-15",
+		"productDate": "2020-08-15",
 		"category": 1,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": false
@@ -66,7 +66,7 @@
 		"id": 8,
 		"body": "Start chatting with visitors who need your help.",
 		"title": "Chatbot App",
-		"postDate": "2020-12-01",
+		"productDate": "2020-12-01",
 		"category": 2,
 		"featureImage": "https://dummyimage.com/847x320/d9d9d9/545454.jpg",
 		"published": true

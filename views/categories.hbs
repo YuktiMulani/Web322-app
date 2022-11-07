@@ -35,15 +35,15 @@ table, th, td {
                 <tbody>
                     {{#each categories}}
                     <tr>
-                        <td><a href="/posts?category={{this.id}}">{{this.id}}</a> </td>
-                        <td><a href="/posts?category={{this.id}}">{{this.category}}</a></td>
+                        <td><a href="/products?category={{this.id}}">{{this.id}}</a> </td>
+                        <td><a href="/products?category={{this.id}}">{{this.category}}</a></td>
                     </tr>
                     {{/each}}
                 </tbody>
             </table>
         </div>
     </div>
-    {{#unless posts}}
+    {{#unless products}}
     <div class="col-md-12 text-center">
         <strong>{{message}}</strong> 
     </div>
