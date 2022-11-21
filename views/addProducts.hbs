@@ -9,10 +9,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
 
     <link rel="stylesheet" href="https://bootswatch.com/3/slate/bootstrap.min.css" />
-
-
-
-    <title>Home</title>
+    <title>Add Product</title>
 </head>
 
 <body>
@@ -22,11 +19,8 @@
             <div class="col-md-12">
 
                 <h2>Add Product</h2>
-
-                <br />
-
-                <form method="Product" action="/Products/add" enctype="multipart/form-data">
-
+                <br/>
+                <form method="POST" action="/demos/add" enctype="multipart/form-data">
                     <fieldset>
                         <legend>Feature Image</legend>
                         <div class="row">
@@ -60,14 +54,16 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                               <label for="category">Category:</label>
-                              <select class="form-control" name="category" id="category">
-                                <option value="1">Technology</option>
-                                <option value="2">Gaming</option>
-                                <option value="3">Fashion</option>
-                                <option value="4">Education</option>
-                                <option value="5">Wellness</option>
-             
-                              </select> 
+                              {{#if categories}}
+                                <select class="form-control" name="category" id="category">
+                                <option value="">Select Category</option>
+                                {{#each categories}}
+                                <option value="{{id}}">{{category}}</option>
+                                            {{/each}}
+                                </select>
+                                {{else}}
+                                <div>No Categories</div>
+                            {{/if}}
                           </div>
                             </div>
                             <div class="col-md-6">
@@ -81,13 +77,10 @@
                                 </div>
                             </div>
                         </div>
-
                     </fieldset>
-
                     <hr />
-
-                    <input type="submit" class="btn btn-primary pull-right" value="Add Product" /><br /><br /><br />
-
+                    <button type="submit" class="btn btn-info pull-right">Add Product</button>
+                    <br /><br /><br />
                 </form>
             </div>
         </div>
