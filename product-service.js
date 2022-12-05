@@ -1,8 +1,32 @@
 const Sequelize = require('sequelize');
-require('dotenv').config()
 
-var sequelize = new Sequelize(process.env.DATABASE, {
-    host: 'host',
+// local 
+// database='postgres';
+// username='postgres';
+// host='localhost';
+// password='password';
+
+// d6
+// database='d6ujnl3iar8u7g';
+// username='ifjsbifzliwugs';
+// host='ec2-44-206-89-185.compute-1.amazonaws.com';
+// password='c7acdf94caf20c68e61d7c807aa959afabd83c36c7c13c9dc5dc1faf3995a902';
+
+// d2
+// database='d2u7h53lnspsnd';
+// username='mugdncxmlyngwt';
+// host='ec2-52-72-56-59.compute-1.amazonaws.com';
+// password='494bc60a0241075b7971263283f80e97477563c77f13090a7cf112e6a7a98383';
+
+// elephant
+const database='esowotiv'
+const username='esowotiv'
+const password='s6NFvc6Zi_CSIWIvjjhie9yZ9pumwfWC'
+const host='peanut.db.elephantsql.com'
+
+var sequelize = new Sequelize(database
+    , username, password, {
+    host: host,
     dialect: 'postgres',
     port: 5432,
     dialectOptions: {
@@ -11,210 +35,188 @@ var sequelize = new Sequelize(process.env.DATABASE, {
     query: { raw: true }
 });
 
-// Schema Model
+// Define a "Product" model
 
 var Product = sequelize.define('Product', {
-    body: Sequelize.STRING,
-    title: Sequelize.TEXT,
+    body: Sequelize.TEXT,
+    title: Sequelize.STRING,
     postDate: Sequelize.DATE,
     featureImage: Sequelize.STRING,
-    published: Sequelize.BOOLEAN,
+    published: Sequelize.BOOLEAN
 });
+
+// Define a "Category" model
 
 var Category = sequelize.define('Category', {
-    category: Sequelize.STRING,
+    category: Sequelize.STRING
 });
 
-// Schema Relationship
+// set up association between Product & Category
+Product.belongsTo(Category, {foreignKey: 'category'})
 
-Product.belongsTo(Category, {foreignKey: 'category'});
 
-// Database Functions
-
-module.exports.initialize = function() {
-    return new Promise((resolve, reject) => {
-        sequelize.sync()
-        .then(function(){
-            resolve();
-        })
-        .catch(function(){
-            reject('unable to sync the database');
-        })
-    });
+module.exports.initialize = function () {
+    return sequelize.sync()
 }
 
-module.exports.getAllproducts = function() {
+module.exports.getAllProducts = function () {
     return new Promise((resolve, reject) => {
-        Product.findAll()
-        .then((data)=>{
+        Product.findAll().then(data=>{
             resolve(data);
-        })
-        .catch((err)=>{
-            reject('no results returned');
-        })
+        }).catch( err =>{
+            reject("no results returned");
+        });
     });
 }
 
-module.exports.getproductsByCategory = function(category) {
+module.exports.getProductsByCategory = function (category) {
     return new Promise((resolve, reject) => {
         Product.findAll({
-            where:{
+            where: {
                 category: category
             }
-        })
-        .then((data)=>{
+        }).then( data => {
             resolve(data);
-        })
-        .catch((err)=>{
-            reject('no results returned');
-        })
+        }).catch(() => {
+            reject("no results returned");
+        });
     });
 }
 
-module.exports.getproductsByMinDate = function(minDateStr) {
+module.exports.getProductsByMinDate = function (minDateStr) {
+
+    const { gte } = Sequelize.Op;
+
     return new Promise((resolve, reject) => {
         Product.findAll({
-            where:{
+            where: {
                 postDate: {
                     [gte]: new Date(minDateStr)
-                }
+                  }
             }
-        })
-        .then((data)=>{
+        }).then( data => {
             resolve(data);
-        })
-        .catch((err)=>{
-            reject('no results returned');
-        })
+        }).catch((err) => {
+            reject("no results returned");
+        });
     });
 }
 
-module.exports.getproductById = function(id) {
+module.exports.getProductById = function (id) {
     return new Promise((resolve, reject) => {
         Product.findAll({
-            where:{
+            where: {
                 id: id
             }
-        })
-        .then((data)=>{
+        }).then( data => {
             resolve(data[0]);
-        })
-        .catch((err)=>{
-            reject('no results returned');
-        })
+        }).catch((err) => {
+            reject("no results returned");
+        });
     });
 }
 
-module.exports.addProduct = function(productData) {
+module.exports.addProduct = function (productData) {
     return new Promise((resolve, reject) => {
+        productData.published = productData.published ? true : false;
 
-        productData.published = (productData.published) ? true : false;
-        productData.body = (productData.body==="") ? null : productData.body;
-        productData.title = (productData.title==="") ? null : productData.title;
-        productData.featureImage = (productData.featureImage==="") ? null : productData.featureImage;
+        for (var prop in productData) {
+            if (productData[prop] === '')
+            productData[prop] = null;
+        }
+
         productData.postDate = new Date();
 
-        Product.create(productData)
-        .then((data)=>{
+        Product.create(productData).then(() => {
             resolve();
-        })
-        .catch((err)=>{
-            reject('unable to create product');
-        })
+        }).catch((e) => {
+            reject("unable to create product");
+        });
 
     });
 }
 
-module.exports.getPublishedproducts = function() {
+module.exports.deleteProductById = function (id) {
+    return new Promise((resolve, reject) => {
+        Product.destroy({
+            where: {
+                id: id
+            }
+        }).then( data => {
+            resolve();
+        }).catch(() => {
+            reject("unable to delete product");
+        });
+    });
+}
+
+module.exports.getPublishedProducts = function () {
     return new Promise((resolve, reject) => {
         Product.findAll({
-            where:{
+            where: {
                 published: true
             }
-        })
-        .then((data)=>{
+        }).then( data => {
             resolve(data);
-        })
-        .catch((err)=>{
-            reject('no results returned');
-        })
+        }).catch(() => {
+            reject("no results returned");
+        });
     });
 }
 
-module.exports.getPublishedproductsByCategory = function(category) {
+module.exports.getPublishedProductsByCategory = function (category) {
     return new Promise((resolve, reject) => {
         Product.findAll({
-            where:{
+            where: {
                 published: true,
                 category: category
             }
-        })
-        .then((data)=>{
+        }).then( data => {
             resolve(data);
-        })
-        .catch((err)=>{
-            reject('no results returned');
-        })
+        }).catch(() => {
+            reject("no results returned");
+        });
     });
 }
 
-module.exports.deleteProductById = function(id) {
+module.exports.getCategories = function () {
     return new Promise((resolve, reject) => {
-        Product.destroy({
-            where:{
-                id: id
-            }
-        })
-        .then((data)=>{
-            resolve('destroyed');   
-        })
-        .catch((err)=>{
-            reject('unable to delete product');
-        })
-    });
-}
-
-// Category realted functions
-
-module.exports.getCategories = function() {
-    return new Promise((resolve, reject) => {
-        Category.findAll()
-        .then((data)=>{
+        Category.findAll().then(data=>{
             resolve(data);
-        })
-        .catch((err)=>{
-            reject('no results returned');
-        })
+        }).catch( err =>{
+            reject("no results returned")
+        });
     });
 }
 
-module.exports.addCategory = function(categoryData) {
+module.exports.addCategory = function (categoryData) {
     return new Promise((resolve, reject) => {
-        categoryData.category = (categoryData.category==="") ? null : categoryData.category;
-        Category.create(categoryData)
-        .then((data)=>{
+
+        for (var prop in categoryData) {
+            if (categoryData[prop] === '')
+            categoryData[prop] = null;
+        }
+
+        Category.create(categoryData).then(() => {
             resolve();
-        })
-        .catch((err)=>{
-            reject('unable to create category');
-        })
+        }).catch((e) => {
+            reject("unable to create category");
+        });
 
     });
 }
 
-module.exports.deleteCategoryById = function(id) {
+module.exports.deleteCategoryById = function (id) {
     return new Promise((resolve, reject) => {
         Category.destroy({
-            where:{
+            where: {
                 id: id
             }
-        })
-        .then((data)=>{
-            resolve('destroyed');   
-        })
-        .catch((err)=>{
-            reject('unable to delete category');
-        })
+        }).then( data => {
+            resolve();
+        }).catch(() => {
+            reject("unable to delete category");
+        });
     });
 }
 

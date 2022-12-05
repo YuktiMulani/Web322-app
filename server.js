@@ -9,43 +9,49 @@
 *  Online (Cyclic) Link: https://dull-pear-barnacle-shoe.cyclic.app
 *
 ********************************************************************************/ 
-// Express 
 const express = require('express');
-const exphbs = require('express-handlebars');
-
-// Database Service
-const productData = require('./product-service');
-
-// Handling Images
+const productData = require("./product-service");
+const multer = require("multer");
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
-
-// Handling Multipart Data
-const multer = require("multer");
-
-// Handling Paths
+const exphbs = require("express-handlebars");
 const path = require("path");
+const stripJs = require('strip-js');
+const authData = require('./auth-service.js');
+const clientSessions = require('client-sessions');
 
-// Instance of Express
 const app = express();
 
-// Ports
 const HTTP_PORT = process.env.PORT || 8080;
 
-// HTTP Body Parser
-var bodyParser = require('body-parser')
+cloudinary.config({
+    cloud_name: 'dpvrtu9b0',
+    api_key: '512778642227934',
+    api_secret: '8mU8y2UufWxwZQPYs7aQaODYBhI'
+});
+const upload = multer();
 
-var urlencodedParser = bodyParser.urlencoded({ extended: false });
-
-app.engine('.hbs', exphbs.engine({
+app.engine(".hbs", exphbs.engine({
     extname: ".hbs",
-    defaultLayout: "main",
     helpers: {
         navLink: function(url, options) {
             return '<li' +
-                ((url == app.locals.activeRoute) ? ' class="active" ' : '') + '><a href="' + url + '">' + options.fn(this) + '</a></li>';
+                ((url == app.locals.activeRoute) ? ' class="active" ' : '') +
+                '><a href="' + url + '">' + options.fn(this) + '</a></li>';
         },
-        formatDate: function(dateObj){
+        equal: function(lvalue, rvalue, options) {
+            if (arguments.length < 3)
+                throw new Error("Handlebars Helper equal needs 2 parameters");
+            if (lvalue != rvalue) {
+                return options.inverse(this);
+            } else {
+                return options.fn(this);
+            }
+        },
+        safeHTML: function(context) {
+            return stripJs(context);
+        },
+        formatDate: function(dateObj) {
             let year = dateObj.getFullYear();
             let month = (dateObj.getMonth() + 1).toString();
             let day = dateObj.getDate().toString();
@@ -56,52 +62,51 @@ app.engine('.hbs', exphbs.engine({
 
 app.set('view engine', '.hbs');
 
-// cloudinary Config for Images
-cloudinary.config({ 
-    cloud_name: 'dpvrtu9b0', 
-    api_key: '512778642227934', 
-    api_secret: '8mU8y2UufWxwZQPYs7aQaODYBhI' 
-  });
-
-const upload = multer();
-
 app.use(express.static('public'));
+
+app.use(express.urlencoded({ extended: true }));
+
+app.use(clientSessions({
+    cookieName: "session",
+    secret: "ymulani@myseneca.ca",
+    duration: 2 * 60 * 1000,
+    activeDuration: 1000 * 60
+}));
+
 app.use(function(req, res, next) {
-    let route = req.baseUrl + req.path;
-    app.locals.activeRoute = (route == "/") ? "/" : route.replace(/\/$/, "");
+    res.locals.session = req.session;
     next();
 });
 
-// Default Home Page Route
+ensureLogin = (req, res, next) => {
+    if (!(req.session.user)) {
+        res.redirect("/login");
+    } else { next(); }
+};
+
 
 app.get('/', (req, res) => {
-    res.redirect("/product");
+    res.render("home");
 });
 
-// Home Route
-app.get('/home', (req, res) => {
-    res.render(path.join(__dirname + "/views/home.hbs"))
-});
-
-// Product (Single) Route
 app.get('/product', async(req, res) => {
 
     let viewData = {};
 
     try {
-        let Products = [];
+
+        let posts = [];
 
         if (req.query.category) {
-            Products = await productData.getPublishedproductsByCategory(req.query.category);
+            products = await productData.getPublishedProductsByCategory(req.query.category);
         } else {
-            Products = await productData.getPublishedproducts();
+            products = await productData.getPublishedProducts();
         }
 
-        Products.sort((a, b) => new Date(b.productDate) - new Date(a.productDate));
+        products.sort((a, b) => new Date(b.productDate) - new Date(a.productDate));
 
-        let product = Products[0];
-
-        viewData.Products = Products;
+        let product = products[0];
+        viewData.products = products;
         viewData.product = product;
 
     } catch (err) {
@@ -114,108 +119,33 @@ app.get('/product', async(req, res) => {
     } catch (err) {
         viewData.categoriesMessage = "no results"
     }
-    res.render("product", { data: viewData })
-});
-
-// Get Product By Id Route
-
-app.get('/product/:id', async(req, res) => {
-
-    let viewData = {};
-
-    try {
-        let Products = [];
-
-        if (req.query.category) {
-            Products = await productData.getPublishedproductsByCategory(req.query.category);
-        } else {
-            Products = await productData.getPublishedproducts();
-        }
-
-        Products.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
-
-        viewData.Products = Products;
-
-    } catch (err) {
-        viewData.message = "no results";
-    }
-
-    try {
-        viewData.product = await productData.getproductById(req.params.id);
-    } catch (err) {
-        viewData.message = "no results";
-    }
-
-    try {
-        let categories = await productData.getCategories();
-
-        viewData.categories = categories;
-    } catch (err) {
-        viewData.categoriesMessage = "no results"
-    }
 
     res.render("product", { data: viewData })
+
 });
 
-// Get Product By Id Route
-
-app.get('/product/:id', (req, res) => {
-    productData.getproductById(req.params.id).then(data => {
-        res.json(data);
-    }).catch(err => {
-        res.json({ message: err });
-    });
-});
-
-// Get Routes
-
-app.get('/categories', (req, res) => {
-    productData.getCategories().then((data => {
-        if(data.length>0){
-            res.render("categories", { categories: data });
-        }else{
-            res.render("categories", { message: 'no results' });
-        }
-    })).catch(err => {
-        res.render("categories", { message: err });
-    });
-});
-
-app.get('/demos', (req, res) => {
+app.get('/demos', ensureLogin, (req, res) => {
 
     let queryPromise = null;
 
     if (req.query.category) {
-        queryPromise = productData.getproductsByCategory(req.query.category);
+        queryPromise = productData.getProductsByCategory(req.query.category);
     } else if (req.query.minDate) {
-        queryPromise = productData.getproductsByMinDate(req.query.minDate);
+        queryPromise = productData.getProductsByMinDate(req.query.minDate);
     } else {
-        queryPromise = productData.getAllproducts()
+        queryPromise = productData.getAllProducts()
     }
 
     queryPromise.then(data => {
-        if(data.length>0){
-            res.render("demos", { Products: data });
-        }else{
-            res.render("demos", { message: 'no results' });
-        }
+        (data.length > 0) ? res.render("productts", { products: data }): res.render("products", { message: "no results" });
     }).catch(err => {
-        res.render("demos", { message: err });
+        res.render("products", { message: "no results" });
     })
 
 });
 
-// Post (Add New) Routes
+app.post("/products/add", ensureLogin, upload.single("featureImage"), (req, res) => {
 
-app.get('/demos/add', (req, res) => {
-    productData.getCategories().then((data => {
-        res.render(path.join(__dirname + "/views/addProducts.hbs"),{categories: data})
-    })).catch(err => {
-        res.render(path.join(__dirname + "/views/addProducts.hbs"),{categories: null})
-    });
-});
-
-app.post("/demos/add", upload.single("featureImage"), (req, res) => {
     if (req.file) {
         let streamUpload = (req) => {
             return new Promise((resolve, reject) => {
@@ -228,67 +158,171 @@ app.post("/demos/add", upload.single("featureImage"), (req, res) => {
                         }
                     }
                 );
+
                 streamifier.createReadStream(req.file.buffer).pipe(stream);
             });
         };
 
         async function upload(req) {
             let result = await streamUpload(req);
+            console.log(result);
             return result;
         }
 
         upload(req).then((uploaded) => {
-            processproduct(uploaded.url);
+            processProduct(uploaded.url);
         });
     } else {
-        processproduct("");
+        processProduct("");
     }
 
-    function processproduct(imageUrl) {
+    function processProduct(imageUrl) {
         req.body.featureImage = imageUrl;
+
         productData.addProduct(req.body).then(product => {
-            res.redirect("/demos");
+            res.redirect("/products");
         }).catch(err => {
             res.status(500).send(err);
         })
     }
 });
 
-app.get('/categories/add', (req, res) => {
-    res.render(path.join(__dirname + "/views/addCategory.hbs"))
+app.get('/products/add', ensureLogin, (req, res) => {
+    productData.getCategories().then((data) => {
+        res.render("addProduct", { categories: data });
+    }).catch((err) => {
+        res.render("addProduct", { categories: [] });
+    });
 });
 
-app.post("/categories/add", urlencodedParser, (req, res) => {
-    productData.addCategory(req.body)
-    .then(category => {
+app.get("/demos/delete/:id", ensureLogin, (req, res) => {
+    productData.deleteProductById(req.params.id).then(() => {
+        res.redirect("/demos");
+    }).catch((err) => {
+        res.status(500).send("Unable to Remove Product / Product Not Found");
+    });
+});
+
+app.get('/product/:id', ensureLogin, (req, res) => {
+    productData.getProductById(req.params.id).then(data => {
+        res.json(data);
+    }).catch(err => {
+        res.json({ message: err });
+    });
+});
+
+app.get('/product/:id', async(req, res) => {
+
+    let viewData = {};
+
+    try {
+
+        let products = [];
+        if (req.query.category) {
+            products = await productData.getPublishedProductsByCategory(req.query.category);
+        } else {
+            products = await productData.getPublishedProducts();
+        }
+
+        products.sort((a, b) => new Date(b.productDate) - new Date(a.productDate));
+        viewData.products = products;
+
+    } catch (err) {
+        viewData.message = "no results";
+    }
+
+    try {
+        viewData.product = await productData.getProducttById(req.params.id);
+    } catch (err) {
+        viewData.message = "no results";
+    }
+
+    try {
+        let categories = await productData.getCategories();
+        viewData.categories = categories;
+    } catch (err) {
+        viewData.categoriesMessage = "no results"
+    }
+    res.render("product", { data: viewData })
+});
+
+app.get('/categories', ensureLogin, (req, res) => {
+    productData.getCategories().then((data => {
+        (data.length > 0) ? res.render("categories", { categories: data }): res.render("categories", { message: "no results" });
+    })).catch(err => {
+        res.render("categories", { message: "no results" });
+    });
+});
+
+app.get('/categories/add', ensureLogin, (req, res) => {
+    res.render("addCategory");
+});
+
+app.post('/categories/add', ensureLogin, (req, res) => {
+    productData.addCategory(req.body).then(category => {
         res.redirect("/categories");
     }).catch(err => {
-        res.status(500).send(err);
+        res.status(500).send(err.message);
     })
 });
 
-// Delete Routes
-
-app.get('/categories/delete/:id', (req, res) => {
-    productData.deleteCategoryById(req.params.id).then((data => {
+app.get("/categories/delete/:id", ensureLogin, (req, res) => {
+    productData.deleteCategoryById(req.params.id).then(() => {
         res.redirect("/categories");
-    })).catch(err => {
-        res.send(500).send('Unable to Remove category / catgory not found');
+    }).catch((err) => {
+        res.status(500).send("Unable to Remove Category / Category Not Found");
     });
 });
 
-app.get('/demos/delete/:id', (req, res) => {
-    productData.deleteProductById(req.params.id).then((data => {
-        res.redirect("/demos");
-    })).catch(err => {
-        res.send(500).send('Unable to Remove Product / Product not found');
-    });
+app.get("/login", (req, res) => {
+    res.render("login");
 });
 
-productData.initialize().then(() => {
-    app.listen(HTTP_PORT, () => {
-        console.log('server listening on: ' + HTTP_PORT);
-    });
-}).catch((err) => {
-    console.log(err);
+app.get("/register", (req, res) => {
+    res.render("register");
+});
+
+app.post("/register", (req, res) => {
+    authData.registerUser(req.body)
+        .then(() => res.render("register", { successMessage: "User created" }))
+        .catch(err => res.render("register", { errorMessage: err, userName: req.body.userName }))
+});
+
+app.post("/login", (req, res) => {
+    req.body.userAgent = req.get('User-Agent');
+    authData.checkUser(req.body)
+        .then(user => {
+            req.session.user = {
+                userName: user.userName,
+                email: user.email,
+                loginHistory: user.loginHistory
+            }
+            res.redirect('/posts');
+        })
+        .catch(err => {
+            res.render("login", { errorMessage: err, userName: req.body.userName })
+        })
+});
+
+app.get("/logout", (req, res) => {
+    req.session.reset();
+    res.redirect("/login");
+});
+
+app.get("/userHistory", ensureLogin, (req, res) => {
+    res.render("userHistory", { user: req.session.user });
+});
+
+app.use((req, res) => {
+    res.status(404).render("404");
 })
+
+productData.initialize()
+    .then(authData.initialize)
+    .then(function() {
+        app.listen(HTTP_PORT, function() {
+            console.log("app listening on: " + HTTP_PORT)
+        });
+    }).catch(function(err) {
+        console.log("unable to start server: " + err);
+    });
